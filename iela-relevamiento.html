@@ -355,6 +355,22 @@
     background: var(--warning-light);
   }
 
+  .parroquia-input {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1px solid var(--accent-border);
+    border-radius: 4px;
+    background: var(--accent-light);
+    color: var(--text);
+    width: 100%;
+    font-weight: 500;
+  }
+  .parroquia-input.assigned {
+    border-color: #a8dbb9;
+    background: var(--success-light);
+    color: var(--success);
+  }
   .field-group select.parroquia-select {
     border-color: var(--accent-border);
     background: var(--accent-light);
@@ -553,7 +569,20 @@
   </div>
 </header>
 
-<div id="upload-zone">
+<div id="login-zone" style="margin:80px auto;max-width:360px;text-align:center;padding:48px 40px;background:white;border:1px solid var(--border);border-radius:8px;">
+  <h2 style="font-size:16px;font-weight:600;margin-bottom:8px">IELA — Relevamiento</h2>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Ingresá la clave de acceso</p>
+  <input type="password" id="clave-input" placeholder="Clave..." 
+    style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:10px 12px;border:1px solid var(--border);border-radius:4px;margin-bottom:10px;text-align:center;"
+    onkeydown="if(event.key==='Enter')verificarClave()" />
+  <button onclick="verificarClave()" 
+    style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:500;padding:10px;background:var(--text);color:white;border:none;border-radius:4px;cursor:pointer;">
+    Entrar
+  </button>
+  <p id="clave-error" style="font-size:12px;color:var(--accent);margin-top:8px;display:none">Clave incorrecta</p>
+</div>
+
+<div id="upload-zone" style="display:none">
   <h2>Cargando datos...</h2>
   <p id="upload-status">Conectando con Google Sheets</p>
   <div style="margin-top:16px; width:40px; height:40px; border:3px solid #ddd; border-top-color:#1a1916; border-radius:50%; animation:spin 0.8s linear infinite; margin:16px auto;"></div>
@@ -816,8 +845,8 @@ function renderCardBody(cong, idx, distrito) {
   const missing = getMissingFields(cong);
   const allParroquias = DISTRITOS[distrito] ? DISTRITOS[distrito].parroquias : [];
 
-  const parroquiaOptions = `<option value="">— Seleccionar parroquia —</option>` +
-    allParroquias.map(p => `<option value="${p}" ${cong['Parroquia']===p?'selected':''}>${p}</option>`).join('');
+  const parroquiaListId = `par-list-${idx}`;
+  const parroquiaOptions = allParroquias.map(p => `<option value="${p}">`).join('');
 
   const fld = (key, label, full=false) => {
     const val = cong[key] || '';
@@ -842,16 +871,19 @@ function renderCardBody(cong, idx, distrito) {
       </div>
       <div>
         <label>Parroquia *</label>
-        <select class="parroquia-select ${cong['Parroquia']?'assigned':''}"
-          onchange="updateField(${idx},'Parroquia',this.value);renderAll()">
-          ${parroquiaOptions}
-        </select>
+        <datalist id="${parroquiaListId}">${parroquiaOptions}</datalist>
+        <input type="text" list="${parroquiaListId}"
+          class="parroquia-input ${cong['Parroquia']?'assigned':''}"
+          value="${(cong['Parroquia']||'').replace(/"/g,'&quot;')}"
+          placeholder="Escribir o elegir parroquia..."
+          onchange="updateField(${idx},'Parroquia',this.value);renderAll()"
+          oninput="updateField(${idx},'Parroquia',this.value)" />
       </div>
     </div>
     <div class="field-grid">
       ${fld('Ciudad','Ciudad')}
       ${fld('Título Congregación','Nombre congregación')}
-      ${fld('Pastor','Pastor/a')}
+      ${fld('Pastor','Pastor')}
       ${fld('Teléfono','Teléfono')}
       ${fld('e-mail','E-mail')}
       ${fld('Dirección','Dirección')}
@@ -914,6 +946,10 @@ function renderParroquiasEditor() {
     </select>
     <input type="text" id="new-par-name" placeholder="Nombre de nueva parroquia" style="flex:1" />
     <button onclick="addParroquia()">+ Agregar</button>
+  </div>
+  <div style="margin-top:12px;display:flex;align-items:center;gap:10px;">
+    <button onclick="guardarParroquiasEnSheets()" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;padding:7px 16px;background:#2471a3;color:white;border:none;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;" id="btn-guardar-parroquias">☁ Guardar lista de parroquias</button>
+    <span id="parroquias-save-msg" style="font-size:12px;color:var(--text-muted)"></span>
   </div>`;
   ed.innerHTML = html;
 }
@@ -936,6 +972,58 @@ function addParroquia() {
   renderParroquiasEditor();
 }
 
+async function guardarParroquiasEnSheets() {
+  const btn = document.getElementById('btn-guardar-parroquias');
+  const msg = document.getElementById('parroquias-save-msg');
+  btn.textContent = '⏳ Guardando...';
+  btn.disabled = true;
+
+  const iframe = document.createElement('iframe');
+  iframe.name = 'iela-par-frame';
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = APPS_SCRIPT_URL;
+  form.target = 'iela-par-frame';
+
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = 'parroquias';
+  input.value = JSON.stringify(DISTRITOS);
+  form.appendChild(input);
+  document.body.appendChild(form);
+
+  await new Promise(resolve => {
+    iframe.onload = resolve;
+    setTimeout(resolve, 8000);
+    form.submit();
+  });
+
+  document.body.removeChild(form);
+  document.body.removeChild(iframe);
+
+  btn.textContent = '☁ Guardar lista de parroquias';
+  btn.disabled = false;
+  msg.textContent = '✓ Guardado correctamente';
+  setTimeout(() => { msg.textContent = ''; }, 3000);
+}
+
+const ACCESS_KEY = 'iela2026';
+
+function verificarClave() {
+  const val = document.getElementById('clave-input').value;
+  if (val === ACCESS_KEY) {
+    document.getElementById('login-zone').style.display = 'none';
+    document.getElementById('upload-zone').style.display = 'block';
+    cargarDesdeSheets();
+  } else {
+    document.getElementById('clave-error').style.display = 'block';
+    document.getElementById('clave-input').value = '';
+  }
+}
+
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEqhIMyXWxOzjPfEj8ChjlwAaLIDKSE4YgJ5se3uie4pkYSs68aGzjwDHo2ECMY8tIag/exec';
 
 async function guardarEnSheets() {
@@ -944,12 +1032,33 @@ async function guardarEnSheets() {
   btn.textContent = '⏳ Guardando...';
   btn.disabled = true;
   try {
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ rows: congregaciones })
+    // Usar form submit hacia iframe oculto para evitar CORS
+    const iframe = document.createElement('iframe');
+    iframe.name = 'iela-submit-frame';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = APPS_SCRIPT_URL;
+    form.target = 'iela-submit-frame';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'data';
+    input.value = JSON.stringify({ rows: congregaciones });
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    await new Promise((resolve) => {
+      iframe.onload = resolve;
+      setTimeout(resolve, 8000); // timeout máximo 8s
+      form.submit();
     });
+
+    document.body.removeChild(form);
+    document.body.removeChild(iframe);
+
     btn.textContent = '✓ Guardado';
     btn.style.background = '#27ae60';
     setTimeout(() => {
@@ -1013,9 +1122,28 @@ function activarApp(texto) {
 
 // Cargar desde Sheets automáticamente
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/1CS1Y7tFNWxjbgqsrReULZ-actsLL2ii7OOTZfSBZmNQ/gviz/tq?tqx=out:csv&sheet=Hoja%201';
+const PAR_URL = 'https://docs.google.com/spreadsheets/d/1CS1Y7tFNWxjbgqsrReULZ-actsLL2ii7OOTZfSBZmNQ/gviz/tq?tqx=out:csv&sheet=Parroquias';
+
+async function cargarParroquiasDesdeSheets() {
+  try {
+    const res = await fetch(PAR_URL);
+    if (!res.ok) return; // si no existe la hoja, usar las hardcodeadas
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (!rows.length) return;
+    rows.forEach(row => {
+      const dist = (row['Distrito'] || '').trim();
+      const parroquias = (row['Parroquias'] || '').split('|').map(p => p.trim()).filter(Boolean);
+      if (dist && DISTRITOS[dist] && parroquias.length) {
+        DISTRITOS[dist].parroquias = parroquias;
+      }
+    });
+  } catch(e) { /* usar hardcodeadas */ }
+}
 
 async function cargarDesdeSheets() {
   try {
+    await cargarParroquiasDesdeSheets();
     const res = await fetch(CSV_URL);
     if (!res.ok) throw new Error('No se pudo conectar');
     const text = await res.text();
@@ -1028,7 +1156,10 @@ async function cargarDesdeSheets() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', cargarDesdeSheets);
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('clave-input').focus();
+});
 
 document.getElementById('csv-input').addEventListener('change', function(e) {
   const file = e.target.files[0];
