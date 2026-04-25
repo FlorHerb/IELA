@@ -616,19 +616,23 @@
   <button class="filter-btn" onclick="setFilter('no-parroquia', this)">Sin parroquia</button>
   <button class="filter-btn" onclick="setFilter('missing', this)">Con datos faltantes</button>
   <button class="filter-btn" onclick="setFilter('complete', this)">Completas</button>
-  <label style="margin-left:8px">Distrito:</label>
-  <select id="filter-distrito" onchange="updateProvinciaFilter();renderAll()">
-    <option value="">Todos</option>
-    <option value="Buenos Aires">Buenos Aires</option>
-    <option value="Entre Ríos">Entre Ríos</option>
-    <option value="Misiones">Misiones</option>
-    <option value="NOA">NOA</option>
-    <option value="Sur">Sur</option>
-  </select>
-  <label>Provincia:</label>
-  <select id="filter-provincia" onchange="renderAll()">
-    <option value="">Todas</option>
-  </select>
+  <div id="wrap-distrito" style="display:flex;align-items:center;gap:6px;">
+    <label>Distrito:</label>
+    <select id="filter-distrito" onchange="updateProvinciaFilter();renderAll()">
+      <option value="">Todos</option>
+      <option value="Buenos Aires">Buenos Aires</option>
+      <option value="Entre Ríos">Entre Ríos</option>
+      <option value="Misiones">Misiones</option>
+      <option value="NOA">NOA</option>
+      <option value="Sur">Sur</option>
+    </select>
+  </div>
+  <div id="wrap-provincia" style="display:flex;align-items:center;gap:6px;">
+    <label>Provincia:</label>
+    <select id="filter-provincia" onchange="renderAll()">
+      <option value="">Todas</option>
+    </select>
+  </div>
   <button class="toggle-editor-btn" id="btn-editor-parroquias" onclick="toggleParroquiasEditor()" style="display:none">✏ Editar lista de parroquias</button>
   <button id="btn-export" onclick="exportCSV()">⬇ Exportar CSV</button>
   <button id="btn-guardar" onclick="guardarEnSheets()" style="background:#2471a3;color:white;border-color:#2471a3;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;padding:7px 16px;border-radius:4px;cursor:pointer;border:1px solid;text-transform:uppercase;letter-spacing:.04em;">☁ Guardar en Sheets</button>
@@ -754,7 +758,11 @@ function updateStats() {
   const total = congregaciones.length;
   const complete = congregaciones.filter(c => getStatus(c) === 'complete').length;
   const noPar = congregaciones.filter(c => !c['Parroquia']).length;
-  const modified = congregaciones.filter((c, i) => congregacionesOriginales[i] && JSON.stringify(c) !== congregacionesOriginales[i]).length;
+  const modified = congregaciones.filter((c, i) => {
+    if (!congregacionesOriginales[i]) return false;
+    const orig = congregacionesOriginales[i];
+    return Object.keys(c).some(k => (c[k]||'').trim() !== (orig[k]||'').trim());
+  }).length;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-complete').textContent = complete;
   document.getElementById('stat-pending').textContent = noPar;
@@ -1139,7 +1147,7 @@ async function guardarEnSheets() {
     document.body.removeChild(iframe);
 
     // Actualizar snapshot
-    congregaciones.forEach((c, i) => { congregacionesOriginales[i] = JSON.stringify(c); });
+    congregaciones.forEach((c, i) => { congregacionesOriginales[i] = Object.assign({}, c); });
     updateStats();
     btn.textContent = '✓ Guardado';
     btn.style.background = '#27ae60';
@@ -1205,7 +1213,7 @@ function activarApp(texto) {
   // Guardar snapshot original para comparar
   congregacionesOriginales = {};
   congregaciones.forEach((c, i) => {
-    congregacionesOriginales[i] = JSON.stringify(c);
+    congregacionesOriginales[i] = Object.assign({}, c);
   });
   document.getElementById('upload-zone').style.display = 'none';
   document.getElementById('toolbar').style.display = 'flex';
@@ -1217,8 +1225,8 @@ function activarApp(texto) {
   }
   // Ocultar filtro de distrito para usuarios de distrito
   if (sesionDistrito) {
-    document.getElementById('filter-distrito').parentElement.style.display = 'none';
-    document.getElementById('filter-provincia').parentElement.style.display = 'none';
+    document.getElementById('wrap-distrito').style.display = 'none';
+    document.getElementById('wrap-provincia').style.display = 'none';
   }
   updateProvinciaFilter();
   renderAll();
