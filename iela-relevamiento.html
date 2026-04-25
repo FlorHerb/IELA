@@ -45,11 +45,14 @@
     color: white;
     padding: 20px 32px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
     position: sticky;
     top: 0;
     z-index: 100;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
   }
 
   header h1 {
@@ -548,30 +551,34 @@
 </head>
 <body>
 
-<header>
-  <div>
-    <h1>IELA — Relevamiento de Congregaciones</h1>
-    <p id="header-sub">Cargá el CSV para comenzar</p>
+<header style="flex-direction:column;padding:0;align-items:stretch;">
+  <!-- Fila principal -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 32px;">
+    <div>
+      <h1>IELA — Relevamiento de Congregaciones</h1>
+      <p id="header-sub">Cargá el CSV para comenzar</p>
+    </div>
+    <div id="stats-bar" style="display:none">
+      <div class="stat">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num complete" id="stat-complete">0</div>
+        <div class="stat-label">Completas</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num pending" id="stat-pending">0</div>
+        <div class="stat-label">Sin parroquia</div>
+      </div>
+    </div>
   </div>
-  <div id="stats-bar" style="display:none">
-    <div class="stat">
-      <div class="stat-num" id="stat-total">0</div>
-      <div class="stat-label">Total</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num complete" id="stat-complete">0</div>
-      <div class="stat-label">Completas</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num pending" id="stat-pending">0</div>
-      <div class="stat-label">Sin parroquia</div>
-    </div>
+  <!-- Barra de cambios pendientes (segunda fila) -->
+  <div id="changes-bar" style="display:none;align-items:center;gap:12px;padding:8px 32px;background:#e67e22;font-size:13px;font-weight:500;border-top:1px solid rgba(255,255,255,0.2);">
+    <span>⚠ <span id="stat-modified">0</span> congregación/es con cambios sin guardar</span>
+    <button id="btn-guardar-bar" onclick="guardarEnSheets()" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;padding:4px 14px;background:white;color:#e67e22;border:none;border-radius:3px;cursor:pointer;">Guardar ahora</button>
   </div>
 </header>
-<div id="changes-bar" style="display:none; position:sticky; top:65px; z-index:99; background:#e67e22; color:white; padding:8px 32px; font-family:'IBM Plex Sans',sans-serif; font-size:13px; font-weight:500; display:none; align-items:center; gap:12px;">
-  <span>⚠ <span id="stat-modified">0</span> congregación/es con cambios sin guardar</span>
-  <button onclick="guardarEnSheets()" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;padding:4px 14px;background:white;color:#e67e22;border:none;border-radius:3px;cursor:pointer;">Guardar ahora</button>
-</div>
 
 <div id="login-zone" style="margin:80px auto;max-width:360px;text-align:center;padding:48px 40px;background:white;border:1px solid var(--border);border-radius:8px;">
   <h2 style="font-size:16px;font-weight:600;margin-bottom:8px">IELA — Relevamiento</h2>
@@ -1065,8 +1072,10 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEqhIMyXWxOzjP
 async function guardarEnSheets() {
   if (!congregaciones.length) { alert('No hay datos cargados.'); return; }
   const btn = document.getElementById('btn-guardar');
+  const btnBar = document.getElementById('btn-guardar-bar');
   btn.textContent = '⏳ Guardando...';
   btn.disabled = true;
+  if (btnBar) { btnBar.textContent = '⏳ Guardando...'; btnBar.disabled = true; }
   try {
     // Usar form submit hacia iframe oculto para evitar CORS
     const iframe = document.createElement('iframe');
@@ -1100,15 +1109,18 @@ async function guardarEnSheets() {
     updateStats();
     btn.textContent = '✓ Guardado';
     btn.style.background = '#27ae60';
+    if (btnBar) { btnBar.textContent = '✓ Guardado'; }
     setTimeout(() => {
       btn.textContent = '☁ Guardar en Sheets';
       btn.style.background = '#2471a3';
       btn.disabled = false;
+      if (btnBar) { btnBar.textContent = 'Guardar ahora'; btnBar.disabled = false; }
     }, 3000);
   } catch (err) {
     alert('Error al guardar: ' + err.message);
     btn.textContent = '☁ Guardar en Sheets';
     btn.disabled = false;
+    if (btnBar) { btnBar.textContent = 'Guardar ahora'; btnBar.disabled = false; }
   }
 }
 
