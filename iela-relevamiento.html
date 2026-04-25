@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IELA — Relevamiento de Congregaciones</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --border: #dddbd3;
+    --border-strong: #b0ada3;
+    --text: #1a1916;
+    --text-muted: #6b6860;
+    --text-hint: #9e9b94;
+    --accent: #c0392b;
+    --accent-light: #fdf0ee;
+    --accent-border: #e8b4ae;
+    --warning: #e67e22;
+    --warning-light: #fef9f0;
+    --warning-border: #f5d5a8;
+    --success: #27ae60;
+    --success-light: #f0faf4;
+    --distrito-bs: #1a5276;
+    --distrito-er: #145a32;
+    --distrito-mis: #6c3483;
+    --distrito-noa: #935116;
+    --distrito-sur: #1a5276;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  header {
+    background: var(--text);
+    color: white;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  header p {
+    font-size: 12px;
+    color: #aaa;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  #stats-bar {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .stat {
+    text-align: right;
+  }
+
+  .stat-num {
+    font-size: 20px;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+    color: white;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .stat-num.complete { color: #2ecc71; }
+  .stat-num.pending { color: #e67e22; }
+
+  #toolbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 32px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  #toolbar label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  #toolbar select, #toolbar input[type=text] {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  #toolbar button {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 7px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: background 0.15s;
+  }
+
+  #toolbar button:hover { background: var(--bg); }
+
+  #btn-export {
+    background: var(--text) !important;
+    color: white !important;
+    border-color: var(--text) !important;
+    margin-left: auto;
+  }
+
+  #btn-export:hover { background: #333 !important; }
+
+  #upload-zone {
+    margin: 40px auto;
+    max-width: 500px;
+    text-align: center;
+    padding: 60px 40px;
+    border: 2px dashed var(--border-strong);
+    border-radius: 8px;
+    background: var(--surface);
+    cursor: pointer;
+  }
+
+  #upload-zone h2 { font-size: 16px; font-weight: 500; margin-bottom: 8px; }
+  #upload-zone p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+  #upload-zone input[type=file] { display: none; }
+
+  #upload-zone button {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 24px;
+    background: var(--text);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  #main { max-width: 1100px; margin: 0 auto; padding: 24px 32px; }
+
+  .distrito-section { margin-bottom: 40px; }
+
+  .distrito-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--text);
+  }
+
+  .distrito-badge {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border-radius: 2px;
+    color: white;
+  }
+
+  .distrito-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .distrito-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-left: auto;
+  }
+
+  .provincia-group { margin-bottom: 24px; }
+
+  .provincia-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    padding: 6px 0;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cong-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+
+  .cong-card.has-missing { border-left: 3px solid var(--warning); }
+  .cong-card.complete { border-left: 3px solid var(--success); }
+  .cong-card.no-parroquia { border-left: 3px solid var(--accent); }
+
+  .cong-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    cursor: pointer;
+    gap: 10px;
+    user-select: none;
+  }
+
+  .cong-header:hover { background: var(--bg); }
+
+  .cong-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-missing { background: var(--warning); }
+  .dot-complete { background: var(--success); }
+  .dot-no-parroquia { background: var(--accent); }
+
+  .cong-title {
+    font-weight: 500;
+    font-size: 13px;
+    flex: 1;
+  }
+
+  .cong-city {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .parroquia-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--success-light);
+    color: var(--success);
+    border: 1px solid #a8dbb9;
+    font-weight: 500;
+  }
+
+  .parroquia-badge.empty {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent-border);
+  }
+
+  .missing-count {
+    font-size: 11px;
+    color: var(--warning);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .expand-icon {
+    font-size: 11px;
+    color: var(--text-hint);
+    transition: transform 0.2s;
+  }
+
+  .cong-card.open .expand-icon { transform: rotate(180deg); }
+
+  .cong-body {
+    display: none;
+    padding: 14px 16px 16px;
+    border-top: 1px solid var(--border);
+    background: #fafaf8;
+  }
+
+  .cong-card.open .cong-body { display: block; }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .field-full { grid-column: 1 / -1; }
+
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+
+  .field-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+  }
+
+  .field-label .missing-tag {
+    color: var(--warning);
+    font-size: 10px;
+    margin-left: 4px;
+  }
+
+  .field-group input,
+  .field-group select,
+  .field-group textarea {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--text);
+    width: 100%;
+  }
+
+  .field-group input.missing,
+  .field-group select.missing,
+  .field-group textarea.missing {
+    border-color: var(--warning-border);
+    background: var(--warning-light);
+  }
+
+  .field-group select.parroquia-select {
+    border-color: var(--accent-border);
+    background: var(--accent-light);
+    font-weight: 500;
+  }
+
+  .field-group select.parroquia-select.assigned {
+    border-color: #a8dbb9;
+    background: var(--success-light);
+    color: var(--success);
+  }
+
+  .field-group textarea { resize: vertical; min-height: 60px; }
+
+  .parroquia-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+
+  .parroquia-row label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  #parroquias-editor {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  #parroquias-editor h3 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+    color: var(--text-muted);
+  }
+
+  .parroquias-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .parroquia-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+  }
+
+  .parroquia-item input {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    flex: 1;
+    outline: none;
+  }
+
+  .parroquia-item .distrito-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .parroquia-item button {
+    font-size: 12px;
+    color: var(--text-hint);
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+  }
+
+  .parroquia-item button:hover { color: var(--accent); }
+
+  .add-parroquia-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  .add-parroquia-row select,
+  .add-parroquia-row input {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+  }
+
+  .add-parroquia-row button {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    padding: 6px 14px;
+    background: var(--text);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  #no-data {
+    text-align: center;
+    padding: 60px;
+    color: var(--text-muted);
+  }
+
+  .toggle-editor-btn {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    padding: 6px 14px;
+    background: none;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .filter-btn {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+  }
+
+  .filter-btn.active {
+    background: var(--text);
+    color: white;
+    border-color: var(--text);
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+    #main { padding: 16px; }
+    .field-grid { grid-template-columns: 1fr; }
+    .parroquia-row { grid-template-columns: 1fr; }
+    #toolbar { padding: 10px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>IELA — Relevamiento de Congregaciones</h1>
+    <p id="header-sub">Cargá el CSV para comenzar</p>
+  </div>
+  <div id="stats-bar" style="display:none">
+    <div class="stat">
+      <div class="stat-num" id="stat-total">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num complete" id="stat-complete">0</div>
+      <div class="stat-label">Completas</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num pending" id="stat-pending">0</div>
+      <div class="stat-label">Sin parroquia</div>
+    </div>
+  </div>
+</header>
+
+<div id="upload-zone">
+  <h2>Cargando datos...</h2>
+  <p id="upload-status">Conectando con Google Sheets</p>
+  <div style="margin-top:16px; width:40px; height:40px; border:3px solid #ddd; border-top-color:#1a1916; border-radius:50%; animation:spin 0.8s linear infinite; margin:16px auto;"></div>
+  <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+  <p style="margin-top:20px; font-size:11px; color:#bbb;">
+    <a href="#" onclick="showManualUpload()" style="color:#999;">¿Problemas al cargar? Subir CSV manualmente</a>
+  </p>
+  <div id="manual-upload" style="display:none; margin-top:16px;">
+    <input type="file" id="csv-input" accept=".csv">
+    <button onclick="document.getElementById('csv-input').click()" style="font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:500;padding:10px 24px;background:#1a1916;color:white;border:none;border-radius:4px;cursor:pointer;">Seleccionar archivo CSV</button>
+  </div>
+</div>
+
+<div id="toolbar" style="display:none">
+  <label>Filtrar:</label>
+  <button class="filter-btn active" onclick="setFilter('all', this)">Todas</button>
+  <button class="filter-btn" onclick="setFilter('no-parroquia', this)">Sin parroquia</button>
+  <button class="filter-btn" onclick="setFilter('missing', this)">Con datos faltantes</button>
+  <button class="filter-btn" onclick="setFilter('complete', this)">Completas</button>
+  <label style="margin-left:8px">Distrito:</label>
+  <select id="filter-distrito" onchange="updateProvinciaFilter();renderAll()">
+    <option value="">Todos</option>
+    <option value="Buenos Aires">Buenos Aires</option>
+    <option value="Entre Ríos">Entre Ríos</option>
+    <option value="Misiones">Misiones</option>
+    <option value="NOA">NOA</option>
+    <option value="Sur">Sur</option>
+  </select>
+  <label>Provincia:</label>
+  <select id="filter-provincia" onchange="renderAll()">
+    <option value="">Todas</option>
+  </select>
+  <button class="toggle-editor-btn" onclick="toggleParroquiasEditor()">✏ Editar lista de parroquias</button>
+  <button id="btn-export" onclick="exportCSV()">⬇ Exportar CSV</button>
+  <button id="btn-guardar" onclick="guardarEnSheets()" style="background:#2471a3;color:white;border-color:#2471a3;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;padding:7px 16px;border-radius:4px;cursor:pointer;border:1px solid;text-transform:uppercase;letter-spacing:.04em;">☁ Guardar en Sheets</button>
+</div>
+<div id="search-bar" style="display:none; background:var(--surface); border-bottom:1px solid var(--border); padding:10px 32px;">
+  <input type="text" id="search-input" placeholder="Buscar por ciudad, congregación, pastor, dirección..."
+    style="width:100%; font-family:'IBM Plex Sans',sans-serif; font-size:13px; padding:8px 12px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text);"
+    oninput="renderAll()" />
+</div>
+
+<div id="main">
+  <div id="no-data" style="display:none">No hay congregaciones que coincidan con el filtro.</div>
+  <div id="parroquias-editor" style="display:none"></div>
+  <div id="content"></div>
+</div>
+
+<script>
+const DISTRITOS = {
+  "Buenos Aires": {
+    color: "#1a5276",
+    parroquias: ["Banfield","Belgrano","Campana/Lima","Córdoba","Don Torcuato","Hurlingham","Ing. Maschwitz","Ing. Pablo Nogués","J.L. Suarez","Lujan/Padua (P.Timoteo)","Mar del Plata","Miramar","Pilar/Arrecifes","Ránelagh/ F Varela/ Echeverría","Río Cuarto/San Luis","San Justo","San Miguel","V. Ballester"]
+  },
+  "Entre Ríos": {
+    color: "#145a32",
+    parroquias: ["Basavilbaso","Concordia","Crespo","Federal","Galarza","Gualeguaychu","Hernandarias","La Providencia","Macia","Paraná","Rosario","San Salvador","Santo Tomé","Urdinarrain (San Juan)","Viale","Villaguay"]
+  },
+  "Misiones": {
+    color: "#6c3483",
+    parroquias: ["25 de Mayo","A. del Valle","Alberdi","Andresito","Campo Viera","Col. Alicia","Col. Aurora","Dos de Mayo","El Soberbio S Pablo","El Soberbio Timoteo","Eldorado","Garuhape","Hipólito Yrigoyen","L N Alem","Montecarlo","Oberá","Posadas","Pozo Azul","Pto. Esperanza","S Vte S Juan","S Vte S Pablo","San Pedro","Sta Rita"]
+  },
+  "NOA": {
+    color: "#935116",
+    parroquias: ["Chaco Sur","J J Castelli","R. S. Peña","Resistencia","Romang","S Bernardo","Salta","Tucuman"]
+  },
+  "Sur": {
+    color: "#2471a3",
+    parroquias: ["Bahía Blanca","Cipolletti","Cnel. Suarez","Darregueira","Gral. S. Martín LP","Guatraché","Pto. Madryn","Sta. Rosa - Winifreda"]
+  }
+};
+
+const PROVINCIA_DISTRITO = {
+  "Buenos Aires": "Buenos Aires", "Córdoba": "Buenos Aires", "Santa Fe": "Entre Ríos",
+  "Entre Ríos": "Entre Ríos", "Misiones": "Misiones", "Chaco": "NOA",
+  "Salta": "NOA", "Tucumán": "NOA", "Formosa": "NOA", "Santiago del Estero": "NOA",
+  "Jujuy": "NOA", "La Pampa": "Sur", "Neuquén": "Sur", "Río Negro": "Sur",
+  "Chubut": "Sur", "Santa Cruz": "Sur", "Tierra del Fuego": "Sur",
+  "San Luis": "Buenos Aires", "Corrientes": "Entre Ríos"
+};
+
+let congregaciones = [];
+let currentFilter = 'all';
+
+function updateProvinciaFilter() {
+  const dist = document.getElementById('filter-distrito').value;
+  const sel = document.getElementById('filter-provincia');
+  const provincias = [...new Set(congregaciones
+    .filter(c => !dist || getDistrito(c['Provincia']) === dist)
+    .map(c => c['Provincia']).filter(Boolean).sort())];
+  sel.innerHTML = '<option value="">Todas</option>' +
+    provincias.map(p => `<option value="${p}">${p}</option>`).join('');
+}
+
+function matchesSearch(c, q) {
+  if (!q) return true;
+  const lower = q.toLowerCase();
+  return ['Ciudad','Título Congregación','Pastor','Dirección','e-mail','Parroquia']
+    .some(f => (c[f] || '').toLowerCase().includes(lower));
+}
+
+const REQUIRED_FIELDS = ['Ciudad','Título Congregación','Dirección','Pastor','Teléfono','e-mail'];
+
+function parseCSV(text) {
+  const rows = parseCSVFull(text);
+  if (rows.length < 2) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).filter(r => r.some(v => v.trim())).map(vals => {
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = (vals[idx] || '').trim(); });
+    return obj;
+  });
+}
+
+function parseCSVFull(text) {
+  const rows = [];
+  let row = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i+1];
+    if (inQuotes) {
+      if (ch === '"' && next === '"') { current += '"'; i++; }
+      else if (ch === '"') { inQuotes = false; }
+      else { current += ch; }
+    } else {
+      if (ch === '"') { inQuotes = true; }
+      else if (ch === ',') { row.push(current); current = ''; }
+      else if (ch === '\r' && next === '\n') { row.push(current); current = ''; rows.push(row); row = []; i++; }
+      else if (ch === '\n' || ch === '\r') { row.push(current); current = ''; rows.push(row); row = []; }
+      else { current += ch; }
+    }
+  }
+  if (current || row.length) { row.push(current); rows.push(row); }
+  return rows;
+}
+
+function getDistrito(provincia) {
+  return PROVINCIA_DISTRITO[provincia] || 'Buenos Aires';
+}
+
+function getMissingFields(cong) {
+  return REQUIRED_FIELDS.filter(f => !cong[f] || cong[f].trim() === '');
+}
+
+function getStatus(cong) {
+  if (!cong['Parroquia']) return 'no-parroquia';
+  if (getMissingFields(cong).length > 0) return 'missing';
+  return 'complete';
+}
+
+function updateStats() {
+  const total = congregaciones.length;
+  const complete = congregaciones.filter(c => getStatus(c) === 'complete').length;
+  const noPar = congregaciones.filter(c => !c['Parroquia']).length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-complete').textContent = complete;
+  document.getElementById('stat-pending').textContent = noPar;
+  document.getElementById('header-sub').textContent =
+    `${total} congregaciones · ${complete} completas · ${noPar} sin parroquia`;
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+function renderAll() {
+  const content = document.getElementById('content');
+  const noData = document.getElementById('no-data');
+  const filtroDistrito = document.getElementById('filter-distrito').value;
+  const filtroProvincia = document.getElementById('filter-provincia').value;
+  const searchQ = (document.getElementById('search-input') || {}).value || '';
+
+  let filtered = congregaciones.filter(c => {
+    if (currentFilter === 'no-parroquia' && c['Parroquia']) return false;
+    if (currentFilter === 'missing' && getMissingFields(c).length === 0) return false;
+    if (currentFilter === 'complete' && getStatus(c) !== 'complete') return false;
+    if (filtroDistrito && getDistrito(c['Provincia']) !== filtroDistrito) return false;
+    if (filtroProvincia && c['Provincia'] !== filtroProvincia) return false;
+    if (!matchesSearch(c, searchQ)) return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    content.innerHTML = '';
+    noData.style.display = 'block';
+    return;
+  }
+  noData.style.display = 'none';
+
+  const byDistrito = {};
+  filtered.forEach(c => {
+    const d = getDistrito(c['Provincia']);
+    if (!byDistrito[d]) byDistrito[d] = {};
+    const prov = c['Provincia'] || 'Sin provincia';
+    if (!byDistrito[d][prov]) byDistrito[d][prov] = [];
+    byDistrito[d][prov].push(c);
+  });
+
+  const districtOrder = ['Buenos Aires','Entre Ríos','Misiones','NOA','Sur'];
+  let html = '';
+
+  districtOrder.forEach(dist => {
+    if (!byDistrito[dist]) return;
+    const dInfo = DISTRITOS[dist];
+    const provs = byDistrito[dist];
+    const totalDist = Object.values(provs).flat().length;
+
+    html += `<div class="distrito-section">
+      <div class="distrito-header">
+        <span class="distrito-badge" style="background:${dInfo.color}">Distrito</span>
+        <h2>${dist}</h2>
+        <span class="distrito-count">${totalDist} congregaciones</span>
+      </div>`;
+
+    Object.keys(provs).sort().forEach(prov => {
+      html += `<div class="provincia-group">
+        <div class="provincia-label">${prov}</div>`;
+      provs[prov].forEach((cong, idx) => {
+        const id = `cong-${congregaciones.indexOf(cong)}`;
+        const status = getStatus(cong);
+        const missing = getMissingFields(cong);
+        const dotClass = status === 'complete' ? 'dot-complete' : status === 'missing' ? 'dot-missing' : 'dot-no-parroquia';
+        const cardClass = status === 'complete' ? 'complete' : status === 'missing' ? 'has-missing' : 'no-parroquia';
+        const parBadge = cong['Parroquia']
+          ? `<span class="parroquia-badge">${cong['Parroquia']}</span>`
+          : `<span class="parroquia-badge empty">Sin parroquia</span>`;
+        const missingBadge = missing.length > 0
+          ? `<span class="missing-count">${missing.length} campo${missing.length>1?'s':''} vacío${missing.length>1?'s':''}</span>`
+          : '';
+
+        html += `<div class="cong-card ${cardClass}" id="${id}">
+          <div class="cong-header" onclick="toggleCard('${id}')">
+            <span class="cong-status-dot ${dotClass}"></span>
+            <span class="cong-title">${cong['Título Congregación'] || '—'}</span>
+            <span class="cong-city">${cong['Ciudad'] || ''}</span>
+            ${parBadge}
+            ${missingBadge}
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="cong-body">
+            ${renderCardBody(cong, congregaciones.indexOf(cong), dist)}
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+
+  content.innerHTML = html;
+  updateStats();
+}
+
+function renderCardBody(cong, idx, distrito) {
+  const missing = getMissingFields(cong);
+  const allParroquias = DISTRITOS[distrito] ? DISTRITOS[distrito].parroquias : [];
+
+  const parroquiaOptions = `<option value="">— Seleccionar parroquia —</option>` +
+    allParroquias.map(p => `<option value="${p}" ${cong['Parroquia']===p?'selected':''}>${p}</option>`).join('');
+
+  const fld = (key, label, full=false) => {
+    const val = cong[key] || '';
+    const isMissing = REQUIRED_FIELDS.includes(key) && !val;
+    const missingTag = isMissing ? `<span class="missing-tag">● vacío</span>` : '';
+    const cls = isMissing ? 'missing' : '';
+    return `<div class="field-group${full?' field-full':''}">
+      <span class="field-label">${label}${missingTag}</span>
+      <input type="text" class="${cls}" value="${val.replace(/"/g,'&quot;')}"
+        onchange="updateField(${idx},'${key}',this.value)" />
+    </div>`;
+  };
+
+  const actVal = (cong['Actividades'] || '').replace(/"/g,'&quot;');
+  const actMissing = !cong['Actividades'] ? 'missing' : '';
+
+  return `
+    <div class="parroquia-row">
+      <div>
+        <label>Distrito</label>
+        <span style="font-size:13px;font-weight:500">${distrito}</span>
+      </div>
+      <div>
+        <label>Parroquia *</label>
+        <select class="parroquia-select ${cong['Parroquia']?'assigned':''}"
+          onchange="updateField(${idx},'Parroquia',this.value);renderAll()">
+          ${parroquiaOptions}
+        </select>
+      </div>
+    </div>
+    <div class="field-grid">
+      ${fld('Ciudad','Ciudad')}
+      ${fld('Título Congregación','Nombre congregación')}
+      ${fld('Pastor','Pastor/a')}
+      ${fld('Teléfono','Teléfono')}
+      ${fld('e-mail','E-mail')}
+      ${fld('Dirección','Dirección')}
+      <div class="field-group field-full">
+        <span class="field-label">Actividades / horarios</span>
+        <textarea class="${actMissing}" onchange="updateField(${idx},'Actividades',this.value)">${actVal}</textarea>
+      </div>
+      ${fld('Facebook','Facebook',false)}
+      ${fld('Instagram','Instagram',false)}
+    </div>`;
+}
+
+function toggleCard(id) {
+  const card = document.getElementById(id);
+  card.classList.toggle('open');
+}
+
+function updateField(idx, key, val) {
+  congregaciones[idx][key] = val;
+  updateStats();
+  const cardId = `cong-${idx}`;
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  const status = getStatus(congregaciones[idx]);
+  card.classList.remove('complete','has-missing','no-parroquia');
+  card.classList.add(status === 'complete' ? 'complete' : status === 'missing' ? 'has-missing' : 'no-parroquia');
+  const dot = card.querySelector('.cong-status-dot');
+  dot.className = 'cong-status-dot ' + (status==='complete'?'dot-complete':status==='missing'?'dot-missing':'dot-no-parroquia');
+}
+
+function toggleParroquiasEditor() {
+  const ed = document.getElementById('parroquias-editor');
+  if (ed.style.display === 'none') {
+    ed.style.display = 'block';
+    renderParroquiasEditor();
+  } else {
+    ed.style.display = 'none';
+  }
+}
+
+function renderParroquiasEditor() {
+  const ed = document.getElementById('parroquias-editor');
+  let html = '<h3>Lista de parroquias por distrito</h3>';
+  Object.entries(DISTRITOS).forEach(([dist, info]) => {
+    html += `<div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:${info.color};margin-bottom:8px">${dist}</div>
+      <div class="parroquias-list" id="plist-${dist}">
+        ${info.parroquias.map((p,i) => `
+          <div class="parroquia-item">
+            <span class="distrito-dot" style="background:${info.color}"></span>
+            <input value="${p}" onchange="updateParroquia('${dist}',${i},this.value)" />
+            <button onclick="removeParroquia('${dist}',${i})">×</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+  html += `<div class="add-parroquia-row">
+    <select id="new-par-dist">
+      ${Object.keys(DISTRITOS).map(d=>`<option>${d}</option>`).join('')}
+    </select>
+    <input type="text" id="new-par-name" placeholder="Nombre de nueva parroquia" style="flex:1" />
+    <button onclick="addParroquia()">+ Agregar</button>
+  </div>`;
+  ed.innerHTML = html;
+}
+
+function updateParroquia(dist, idx, val) {
+  DISTRITOS[dist].parroquias[idx] = val;
+}
+
+function removeParroquia(dist, idx) {
+  DISTRITOS[dist].parroquias.splice(idx, 1);
+  renderParroquiasEditor();
+}
+
+function addParroquia() {
+  const dist = document.getElementById('new-par-dist').value;
+  const name = document.getElementById('new-par-name').value.trim();
+  if (!name) return;
+  DISTRITOS[dist].parroquias.push(name);
+  document.getElementById('new-par-name').value = '';
+  renderParroquiasEditor();
+}
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEqhIMyXWxOzjPfEj8ChjlwAaLIDKSE4YgJ5se3uie4pkYSs68aGzjwDHo2ECMY8tIag/exec';
+
+async function guardarEnSheets() {
+  if (!congregaciones.length) { alert('No hay datos cargados.'); return; }
+  const btn = document.getElementById('btn-guardar');
+  btn.textContent = '⏳ Guardando...';
+  btn.disabled = true;
+  try {
+    const formData = new FormData();
+    formData.append('data', JSON.stringify({ rows: congregaciones }));
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: formData
+    });
+    const text = await res.text();
+    let result;
+    try { result = JSON.parse(text); } catch(e) { result = { status: 'ok' }; }
+    if (result.status === 'error') throw new Error(result.message);
+    btn.textContent = '✓ Guardado';
+    btn.style.background = '#27ae60';
+    setTimeout(() => {
+      btn.textContent = '☁ Guardar en Sheets';
+      btn.style.background = '#2471a3';
+      btn.disabled = false;
+    }, 3000);
+  } catch (err) {
+    alert('Error al guardar: ' + err.message);
+    btn.textContent = '☁ Guardar en Sheets';
+    btn.disabled = false;
+  }
+}
+
+function exportCSV() {
+  if (!congregaciones.length) { alert('No hay datos cargados.'); return; }
+  const headers = Object.keys(congregaciones[0]);
+  if (!headers.includes('Parroquia')) headers.push('Parroquia');
+
+  const escapeVal = v => {
+    if (v === undefined || v === null) return '';
+    const s = String(v);
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+      return '"' + s.replace(/"/g,'""') + '"';
+    }
+    return s;
+  };
+
+  const lines = [headers.map(escapeVal).join(',')];
+  congregaciones.forEach(c => {
+    lines.push(headers.map(h => escapeVal(c[h] || '')).join(','));
+  });
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'iela-congregaciones-actualizado.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function showManualUpload() {
+  document.getElementById('manual-upload').style.display = 'block';
+  document.getElementById('upload-status').textContent = 'Seleccioná el archivo CSV exportado de Google Sheets';
+  document.querySelector('#upload-zone h2').textContent = 'Cargar archivo CSV';
+  document.querySelector('#upload-zone div[style*="spin"]') && 
+    (document.querySelector('#upload-zone div[style*="spin"]').style.display = 'none');
+}
+
+function activarApp(texto) {
+  congregaciones = parseCSV(texto);
+  congregaciones.forEach(c => { if (!c['Parroquia']) c['Parroquia'] = ''; });
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('toolbar').style.display = 'flex';
+  document.getElementById('search-bar').style.display = 'block';
+  document.getElementById('stats-bar').style.display = 'flex';
+  updateProvinciaFilter();
+  renderAll();
+}
+
+// Cargar desde Sheets automáticamente
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/1CS1Y7tFNWxjbgqsrReULZ-actsLL2ii7OOTZfSBZmNQ/gviz/tq?tqx=out:csv&sheet=Hoja%201';
+
+async function cargarDesdeSheets() {
+  try {
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error('No se pudo conectar');
+    const text = await res.text();
+    activarApp(text);
+  } catch(err) {
+    document.querySelector('#upload-zone h2').textContent = 'No se pudo cargar automáticamente';
+    document.getElementById('upload-status').textContent = 'Usá el link de abajo para cargar el CSV manualmente';
+    document.querySelector('#upload-zone div') && (document.querySelector('#upload-zone div').style.display = 'none');
+    showManualUpload();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', cargarDesdeSheets);
+
+document.getElementById('csv-input').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) { activarApp(ev.target.result); };
+  reader.readAsText(file, 'UTF-8');
+});
+</script>
+</body>
+</html>
