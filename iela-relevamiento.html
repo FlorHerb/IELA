@@ -876,8 +876,7 @@ function renderCardBody(cong, idx, distrito) {
           class="parroquia-input ${cong['Parroquia']?'assigned':''}"
           value="${(cong['Parroquia']||'').replace(/"/g,'&quot;')}"
           placeholder="Escribir o elegir parroquia..."
-          onchange="updateField(${idx},'Parroquia',this.value);renderAll()"
-          oninput="updateField(${idx},'Parroquia',this.value)" />
+          onchange="seleccionarParroquia(this, ${idx}, [${allParroquias.map(p=>`'${p.replace(/'/g,"\\'")}' `).join(',')}])" />
       </div>
     </div>
     <div class="field-grid">
@@ -899,6 +898,33 @@ function renderCardBody(cong, idx, distrito) {
 function toggleCard(id) {
   const card = document.getElementById(id);
   card.classList.toggle('open');
+}
+
+function seleccionarParroquia(input, idx, opciones) {
+  const val = input.value.trim();
+  // Solo aceptar si está en la lista o está vacío
+  if (val === '' || opciones.includes(val)) {
+    updateField(idx, 'Parroquia', val);
+    input.className = 'parroquia-input' + (val ? ' assigned' : '');
+    // Actualizar badge en el header sin rerenderizar toda la tarjeta
+    const card = document.getElementById('cong-' + idx);
+    if (card) {
+      const badge = card.querySelector('.parroquia-badge');
+      if (badge) {
+        badge.textContent = val || 'Sin parroquia';
+        badge.className = 'parroquia-badge' + (val ? '' : ' empty');
+      }
+      const status = getStatus(congregaciones[idx]);
+      card.classList.remove('complete','has-missing','no-parroquia');
+      card.classList.add(status === 'complete' ? 'complete' : status === 'missing' ? 'has-missing' : 'no-parroquia');
+      const dot = card.querySelector('.cong-status-dot');
+      if (dot) dot.className = 'cong-status-dot ' + (status==='complete'?'dot-complete':status==='missing'?'dot-missing':'dot-no-parroquia');
+    }
+    updateStats();
+  } else {
+    // Valor no válido: revertir al valor anterior
+    input.value = congregaciones[idx]['Parroquia'] || '';
+  }
 }
 
 function updateField(idx, key, val) {
