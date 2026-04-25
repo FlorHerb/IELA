@@ -568,6 +568,10 @@
     </div>
   </div>
 </header>
+<div id="changes-bar" style="display:none; position:sticky; top:65px; z-index:99; background:#e67e22; color:white; padding:8px 32px; font-family:'IBM Plex Sans',sans-serif; font-size:13px; font-weight:500; display:none; align-items:center; gap:12px;">
+  <span>⚠ <span id="stat-modified">0</span> congregación/es con cambios sin guardar</span>
+  <button onclick="guardarEnSheets()" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;padding:4px 14px;background:white;color:#e67e22;border:none;border-radius:3px;cursor:pointer;">Guardar ahora</button>
+</div>
 
 <div id="login-zone" style="margin:80px auto;max-width:360px;text-align:center;padding:48px 40px;background:white;border:1px solid var(--border);border-radius:8px;">
   <h2 style="font-size:16px;font-weight:600;margin-bottom:8px">IELA — Relevamiento</h2>
@@ -665,6 +669,7 @@ const PROVINCIA_DISTRITO = {
 };
 
 let congregaciones = [];
+let congregacionesOriginales = {};
 let currentFilter = 'all';
 
 function updateProvinciaFilter() {
@@ -739,11 +744,16 @@ function updateStats() {
   const total = congregaciones.length;
   const complete = congregaciones.filter(c => getStatus(c) === 'complete').length;
   const noPar = congregaciones.filter(c => !c['Parroquia']).length;
+  const modified = congregaciones.filter((c, i) => congregacionesOriginales[i] && JSON.stringify(c) !== congregacionesOriginales[i]).length;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-complete').textContent = complete;
   document.getElementById('stat-pending').textContent = noPar;
   document.getElementById('header-sub').textContent =
     `${total} congregaciones · ${complete} completas · ${noPar} sin parroquia`;
+  // Barra de cambios pendientes
+  const bar = document.getElementById('changes-bar');
+  document.getElementById('stat-modified').textContent = modified;
+  bar.style.display = modified > 0 ? 'flex' : 'none';
 }
 
 function setFilter(f, btn) {
@@ -1085,6 +1095,9 @@ async function guardarEnSheets() {
     document.body.removeChild(form);
     document.body.removeChild(iframe);
 
+    // Actualizar snapshot
+    congregaciones.forEach((c, i) => { congregacionesOriginales[i] = JSON.stringify(c); });
+    updateStats();
     btn.textContent = '✓ Guardado';
     btn.style.background = '#27ae60';
     setTimeout(() => {
@@ -1138,6 +1151,11 @@ function showManualUpload() {
 function activarApp(texto) {
   congregaciones = parseCSV(texto);
   congregaciones.forEach(c => { if (!c['Parroquia']) c['Parroquia'] = ''; });
+  // Guardar snapshot original para comparar
+  congregacionesOriginales = {};
+  congregaciones.forEach((c, i) => {
+    congregacionesOriginales[i] = JSON.stringify(c);
+  });
   document.getElementById('upload-zone').style.display = 'none';
   document.getElementById('toolbar').style.display = 'flex';
   document.getElementById('search-bar').style.display = 'block';
