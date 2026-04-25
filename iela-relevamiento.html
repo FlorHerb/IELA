@@ -581,16 +581,19 @@
 </header>
 
 <div id="login-zone" style="margin:80px auto;max-width:360px;text-align:center;padding:48px 40px;background:white;border:1px solid var(--border);border-radius:8px;">
-  <h2 style="font-size:16px;font-weight:600;margin-bottom:8px">IELA — Relevamiento</h2>
-  <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Ingresá la clave de acceso</p>
-  <input type="password" id="clave-input" placeholder="Clave..." 
+  <h2 style="font-size:16px;font-weight:600;margin-bottom:4px">IELA — Relevamiento</h2>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Ingresá tu usuario y clave</p>
+  <input type="text" id="usuario-input" placeholder="Usuario"
+    style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:10px 12px;border:1px solid var(--border);border-radius:4px;margin-bottom:8px;text-align:center;"
+    onkeydown="if(event.key==='Enter')document.getElementById('clave-input').focus()" />
+  <input type="password" id="clave-input" placeholder="Clave"
     style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:10px 12px;border:1px solid var(--border);border-radius:4px;margin-bottom:10px;text-align:center;"
     onkeydown="if(event.key==='Enter')verificarClave()" />
-  <button onclick="verificarClave()" 
-    style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:500;padding:10px;background:var(--text);color:white;border:none;border-radius:4px;cursor:pointer;">
+  <button onclick="verificarClave()"
+    style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:500;padding:10px;background:var(--text);color:white;border:none;border-radius:4px;cursor:pointer;" id="btn-login">
     Entrar
   </button>
-  <p id="clave-error" style="font-size:12px;color:var(--accent);margin-top:8px;display:none">Clave incorrecta</p>
+  <p id="clave-error" style="font-size:12px;color:var(--accent);margin-top:8px;display:none">Usuario o clave incorrectos</p>
 </div>
 
 <div id="upload-zone" style="display:none">
@@ -626,7 +629,7 @@
   <select id="filter-provincia" onchange="renderAll()">
     <option value="">Todas</option>
   </select>
-  <button class="toggle-editor-btn" onclick="toggleParroquiasEditor()">✏ Editar lista de parroquias</button>
+  <button class="toggle-editor-btn" id="btn-editor-parroquias" onclick="toggleParroquiasEditor()" style="display:none">✏ Editar lista de parroquias</button>
   <button id="btn-export" onclick="exportCSV()">⬇ Exportar CSV</button>
   <button id="btn-guardar" onclick="guardarEnSheets()" style="background:#2471a3;color:white;border-color:#2471a3;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;padding:7px 16px;border-radius:4px;cursor:pointer;border:1px solid;text-transform:uppercase;letter-spacing:.04em;">☁ Guardar en Sheets</button>
 </div>
@@ -1031,11 +1034,14 @@ async function guardarParroquiasEnSheets() {
   form.action = APPS_SCRIPT_URL;
   form.target = 'iela-par-frame';
 
-  const input = document.createElement('input');
-  input.type = 'hidden';
-  input.name = 'parroquias';
-  input.value = JSON.stringify(DISTRITOS);
-  form.appendChild(input);
+  const addParField = (name, value) => {
+    const f = document.createElement('input');
+    f.type = 'hidden'; f.name = name; f.value = value;
+    form.appendChild(f);
+  };
+  addParField('parroquias', JSON.stringify(DISTRITOS));
+  addParField('usuario', sesionUsuario);
+  addParField('clave', document.getElementById('clave-input') ? document.getElementById('clave-input').value : '');
   document.body.appendChild(form);
 
   await new Promise(resolve => {
@@ -1053,17 +1059,42 @@ async function guardarParroquiasEnSheets() {
   setTimeout(() => { msg.textContent = ''; }, 3000);
 }
 
-const ACCESS_KEY = 'iela2026';
+let sesionUsuario = null;
+let sesionDistrito = null;
 
-function verificarClave() {
-  const val = document.getElementById('clave-input').value;
-  if (val === ACCESS_KEY) {
-    document.getElementById('login-zone').style.display = 'none';
-    document.getElementById('upload-zone').style.display = 'block';
-    cargarDesdeSheets();
-  } else {
+async function verificarClave() {
+  const usuario = document.getElementById('usuario-input').value.trim().toLowerCase();
+  const clave   = document.getElementById('clave-input').value.trim();
+  const btn     = document.getElementById('btn-login');
+  if (!usuario || !clave) return;
+
+  btn.textContent = 'Verificando...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL + '?usuario=' + encodeURIComponent(usuario) + '&clave=' + encodeURIComponent(clave));
+    const data = await res.json();
+    if (data.status === 'ok') {
+      sesionUsuario = usuario;
+      sesionDistrito = data.distrito; // null = admin, string = distrito
+      document.getElementById('login-zone').style.display = 'none';
+      document.getElementById('upload-zone').style.display = 'block';
+      // Mostrar distrito en header si corresponde
+      if (sesionDistrito) {
+        document.getElementById('header-sub').textContent = 'Distrito ' + sesionDistrito;
+      }
+      cargarDesdeSheets();
+    } else {
+      document.getElementById('clave-error').style.display = 'block';
+      document.getElementById('clave-input').value = '';
+      btn.textContent = 'Entrar';
+      btn.disabled = false;
+    }
+  } catch(err) {
+    document.getElementById('clave-error').textContent = 'Error de conexión. Intentá de nuevo.';
     document.getElementById('clave-error').style.display = 'block';
-    document.getElementById('clave-input').value = '';
+    btn.textContent = 'Entrar';
+    btn.disabled = false;
   }
 }
 
@@ -1088,11 +1119,14 @@ async function guardarEnSheets() {
     form.action = APPS_SCRIPT_URL;
     form.target = 'iela-submit-frame';
 
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'data';
-    input.value = JSON.stringify({ rows: congregaciones });
-    form.appendChild(input);
+    const addField = (name, value) => {
+      const f = document.createElement('input');
+      f.type = 'hidden'; f.name = name; f.value = value;
+      form.appendChild(f);
+    };
+    addField('data', JSON.stringify({ rows: congregaciones }));
+    addField('usuario', sesionUsuario);
+    addField('clave', document.getElementById('clave-input') ? document.getElementById('clave-input').value : '');
     document.body.appendChild(form);
 
     await new Promise((resolve) => {
@@ -1161,8 +1195,13 @@ function showManualUpload() {
 }
 
 function activarApp(texto) {
-  congregaciones = parseCSV(texto);
-  congregaciones.forEach(c => { if (!c['Parroquia']) c['Parroquia'] = ''; });
+  let todas = parseCSV(texto);
+  todas.forEach(c => { if (!c['Parroquia']) c['Parroquia'] = ''; });
+  // Filtrar por distrito si no es admin
+  if (sesionDistrito) {
+    todas = todas.filter(c => getDistrito(c['Provincia']) === sesionDistrito);
+  }
+  congregaciones = todas;
   // Guardar snapshot original para comparar
   congregacionesOriginales = {};
   congregaciones.forEach((c, i) => {
@@ -1172,6 +1211,15 @@ function activarApp(texto) {
   document.getElementById('toolbar').style.display = 'flex';
   document.getElementById('search-bar').style.display = 'block';
   document.getElementById('stats-bar').style.display = 'flex';
+  // Mostrar botón de editar parroquias solo para admin
+  if (!sesionDistrito) {
+    document.getElementById('btn-editor-parroquias').style.display = 'inline-block';
+  }
+  // Ocultar filtro de distrito para usuarios de distrito
+  if (sesionDistrito) {
+    document.getElementById('filter-distrito').parentElement.style.display = 'none';
+    document.getElementById('filter-provincia').parentElement.style.display = 'none';
+  }
   updateProvinciaFilter();
   renderAll();
 }
