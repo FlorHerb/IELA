@@ -944,16 +944,12 @@ async function guardarEnSheets() {
   btn.textContent = '⏳ Guardando...';
   btn.disabled = true;
   try {
-    const formData = new FormData();
-    formData.append('data', JSON.stringify({ rows: congregaciones }));
-    const res = await fetch(APPS_SCRIPT_URL, {
+    await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      body: formData
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ rows: congregaciones })
     });
-    const text = await res.text();
-    let result;
-    try { result = JSON.parse(text); } catch(e) { result = { status: 'ok' }; }
-    if (result.status === 'error') throw new Error(result.message);
     btn.textContent = '✓ Guardado';
     btn.style.background = '#27ae60';
     setTimeout(() => {
