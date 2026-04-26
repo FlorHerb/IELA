@@ -8,26 +8,32 @@
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
   :root {
-    --bg: #f5f4f0;
+    --bg: #f7f5f0;
     --surface: #ffffff;
-    --border: #dddbd3;
-    --border-strong: #b0ada3;
-    --text: #1a1916;
-    --text-muted: #6b6860;
-    --text-hint: #9e9b94;
-    --accent: #c0392b;
-    --accent-light: #fdf0ee;
-    --accent-border: #e8b4ae;
-    --warning: #e67e22;
-    --warning-light: #fef9f0;
-    --warning-border: #f5d5a8;
-    --success: #27ae60;
-    --success-light: #f0faf4;
-    --distrito-bs: #1a5276;
-    --distrito-er: #145a32;
-    --distrito-mis: #6c3483;
-    --distrito-noa: #935116;
-    --distrito-sur: #1a5276;
+    --border: #e2ddd4;
+    --border-strong: #bfb8aa;
+    --text: #1c1a15;
+    --text-muted: #6b6452;
+    --text-hint: #a09882;
+    --accent: #b5271e;
+    --accent-light: #fdf0ef;
+    --accent-border: #e8b0ab;
+    --warning: #c97d14;
+    --warning-light: #fdf6e8;
+    --warning-border: #f0d38e;
+    --success: #2e7d4f;
+    --success-light: #edf7f1;
+    --distrito-bs: #1a5c8a;
+    --distrito-er: #2e7d4f;
+    --distrito-mis: #7b3f9e;
+    --distrito-noa: #c97d14;
+    --distrito-sur: #2060a0;
+    /* Logo palette */
+    --gold: #d4a017;
+    --gold-light: #fdf8e8;
+    --red: #b5271e;
+    --blue: #1a5c8a;
+    --green: #2e7d4f;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,7 +47,7 @@
   }
 
   header {
-    background: var(--text);
+    background: #1c1a15;
     color: white;
     padding: 20px 32px;
     display: flex;
@@ -92,8 +98,8 @@
     letter-spacing: 0.06em;
   }
 
-  .stat-num.complete { color: #2ecc71; }
-  .stat-num.pending { color: #e67e22; }
+  .stat-num.complete { color: #4cbb80; }
+  .stat-num.pending { color: #e8a030; }
 
   #toolbar {
     background: var(--surface);
@@ -141,9 +147,9 @@
   #toolbar button:hover { background: var(--bg); }
 
   #btn-export {
-    background: var(--text) !important;
+    background: #1c1a15 !important;
     color: white !important;
-    border-color: var(--text) !important;
+    border-color: #1c1a15 !important;
     margin-left: auto;
   }
 
@@ -308,7 +314,7 @@
     display: none;
     padding: 14px 16px 16px;
     border-top: 1px solid var(--border);
-    background: #fafaf8;
+    background: #f9f7f3;
   }
 
   .cong-card.open .cong-body { display: block; }
@@ -555,8 +561,8 @@
   <!-- Fila principal -->
   <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 32px;">
     <div>
-      <h1>IELA — Relevamiento de Congregaciones</h1>
-      <p id="header-sub">Cargá el CSV para comenzar</p>
+      <h1>IELA — Actualización de Congregaciones</h1>
+      <p id="header-sub">Aqui podrás actualizar de las congregaciones de IELA</p>
     </div>
     <div id="stats-bar" style="display:none">
       <div class="stat">
@@ -574,9 +580,9 @@
     </div>
   </div>
   <!-- Barra de cambios pendientes (segunda fila) -->
-  <div id="changes-bar" style="display:none;align-items:center;gap:12px;padding:8px 32px;background:#e67e22;font-size:13px;font-weight:500;border-top:1px solid rgba(255,255,255,0.2);">
+  <div id="changes-bar" style="display:none;align-items:center;gap:12px;padding:8px 32px;background:#b5871a;font-size:13px;font-weight:500;border-top:1px solid rgba(255,255,255,0.2);">
     <span>⚠ <span id="stat-modified">0</span> congregación/es con cambios sin guardar</span>
-    <button id="btn-guardar-bar" onclick="guardarEnSheets()" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;padding:4px 14px;background:white;color:#e67e22;border:none;border-radius:3px;cursor:pointer;">Guardar ahora</button>
+    <button id="btn-guardar-bar" onclick="guardarEnSheets()" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;padding:4px 14px;background:white;color:#b5871a;border:none;border-radius:3px;cursor:pointer;">Guardar ahora</button>
   </div>
 </header>
 
@@ -590,7 +596,7 @@
     style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:10px 12px;border:1px solid var(--border);border-radius:4px;margin-bottom:10px;text-align:center;"
     onkeydown="if(event.key==='Enter')verificarClave()" />
   <button onclick="verificarClave()"
-    style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:500;padding:10px;background:var(--text);color:white;border:none;border-radius:4px;cursor:pointer;" id="btn-login">
+    style="width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:500;padding:10px;background:#1a5c8a;color:white;border:none;border-radius:4px;cursor:pointer;" id="btn-login">
     Entrar
   </button>
   <p id="clave-error" style="font-size:12px;color:var(--accent);margin-top:8px;display:none">Usuario o clave incorrectos</p>
@@ -599,7 +605,7 @@
 <div id="upload-zone" style="display:none">
   <h2>Cargando datos...</h2>
   <p id="upload-status">Conectando con Google Sheets</p>
-  <div style="margin-top:16px; width:40px; height:40px; border:3px solid #ddd; border-top-color:#1a1916; border-radius:50%; animation:spin 0.8s linear infinite; margin:16px auto;"></div>
+  <div style="margin-top:16px; width:40px; height:40px; border:3px solid #ddd; border-top-color:#1a5c8a; border-radius:50%; animation:spin 0.8s linear infinite; margin:16px auto;"></div>
   <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
   <p style="margin-top:20px; font-size:11px; color:#bbb;">
     <a href="#" onclick="showManualUpload()" style="color:#999;">¿Problemas al cargar? Subir CSV manualmente</a>
@@ -635,7 +641,7 @@
   </div>
   <button class="toggle-editor-btn" id="btn-editor-parroquias" onclick="toggleParroquiasEditor()" style="display:none">✏ Editar lista de parroquias</button>
   <button id="btn-export" onclick="exportCSV()">⬇ Exportar CSV</button>
-  <button id="btn-guardar" onclick="guardarEnSheets()" style="background:#2471a3;color:white;border-color:#2471a3;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;padding:7px 16px;border-radius:4px;cursor:pointer;border:1px solid;text-transform:uppercase;letter-spacing:.04em;">☁ Guardar en Sheets</button>
+  <button id="btn-guardar" onclick="guardarEnSheets()" style="background:#1a5c8a;color:white;border-color:#1a5c8a;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;padding:7px 16px;border-radius:4px;cursor:pointer;border:1px solid;text-transform:uppercase;letter-spacing:.04em;">☁ Guardar en Sheets</button>
 </div>
 <div id="search-bar" style="display:none; background:var(--surface); border-bottom:1px solid var(--border); padding:10px 32px;">
   <input type="text" id="search-input" placeholder="Buscar por ciudad, congregación, pastor, dirección..."
@@ -1150,14 +1156,30 @@ async function guardarEnSheets() {
     congregaciones.forEach((c, i) => { congregacionesOriginales[i] = Object.assign({}, c); });
     updateStats();
     btn.textContent = '✓ Guardado';
-    btn.style.background = '#27ae60';
+    btn.style.background = '#2e7d4f';
     if (btnBar) { btnBar.textContent = '✓ Guardado'; }
-    setTimeout(() => {
+    setTimeout(async () => {
       btn.textContent = '☁ Guardar en Sheets';
-      btn.style.background = '#2471a3';
+      btn.style.background = '#1a5c8a';
       btn.disabled = false;
       if (btnBar) { btnBar.textContent = 'Guardar ahora'; btnBar.disabled = false; }
-    }, 3000);
+      // Recargar datos desde Sheets para sincronizar
+      await cargarParroquiasDesdeSheets();
+      const res = await fetch(CSV_URL).catch(() => null);
+      if (res && res.ok) {
+        const text = await res.text();
+        let todas = parseCSV(text);
+        todas.forEach(c => { if (!c['Parroquia']) c['Parroquia'] = ''; });
+        if (sesionDistrito) {
+          todas = todas.filter(c => getDistrito(c['Provincia']) === sesionDistrito);
+        }
+        congregaciones = todas;
+        congregacionesOriginales = {};
+        congregaciones.forEach((c, i) => { congregacionesOriginales[i] = Object.assign({}, c); });
+        updateStats();
+        renderAll();
+      }
+    }, 2500);
   } catch (err) {
     alert('Error al guardar: ' + err.message);
     btn.textContent = '☁ Guardar en Sheets';
