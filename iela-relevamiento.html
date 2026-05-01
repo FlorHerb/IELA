@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IELA — Relevamiento de Congregaciones</title>
+<link rel="icon" type="image/png" href="logos.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
@@ -507,6 +508,54 @@
     font-weight: 500;
   }
 
+  .pastor-group {
+    grid-column: 1 / -1;
+    background: var(--gold-light);
+    border: 1px solid #e8d89a;
+    border-radius: 6px;
+    padding: 12px 14px 10px;
+    margin-bottom: 2px;
+  }
+
+  .pastor-group-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9a7a10;
+    margin-bottom: 10px;
+  }
+
+  .pastor-group .field-grid-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .pastor-group {
+    grid-column: 1 / -1;
+    background: var(--gold-light);
+    border: 1px solid #e8d89a;
+    border-radius: 6px;
+    padding: 12px 14px 10px;
+    margin-bottom: 2px;
+  }
+
+  .pastor-group-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9a7a10;
+    margin-bottom: 10px;
+  }
+
+  .pastor-group .field-grid-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
   #no-data {
     text-align: center;
     padding: 60px;
@@ -561,8 +610,8 @@
   <!-- Fila principal -->
   <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 32px;">
     <div>
-      <h1>IELA — Actualización de Congregaciones</h1>
-      <p id="header-sub">Aqui podrás actualizar de las congregaciones de IELA</p>
+      <h1>IELA — Relevamiento de Congregaciones</h1>
+      <p id="header-sub">Aquí podrás actualizar los datos de las congregaciones de IELA</p>
     </div>
     <div id="stats-bar" style="display:none">
       <div class="stat">
@@ -714,7 +763,18 @@ const REQUIRED_FIELDS = ['Ciudad','Título Congregación','Dirección','Pastor',
 function parseCSV(text) {
   const rows = parseCSVFull(text);
   if (rows.length < 2) return [];
-  const headers = rows[0].map(h => h.trim());
+  const rawHeaders = rows[0].map(h => h.trim());
+  // Si hay dos columnas "Dirección", la segunda se renombra internamente
+  const headers = [];
+  let dirCount = 0;
+  rawHeaders.forEach(h => {
+    if (h === 'Dirección') {
+      dirCount++;
+      headers.push(dirCount === 2 ? 'Dirección Pastor' : h);
+    } else {
+      headers.push(h);
+    }
+  });
   return rows.slice(1).filter(r => r.some(v => v.trim())).map(vals => {
     const obj = {};
     headers.forEach((h, idx) => { obj[h] = (vals[idx] || '').trim(); });
@@ -916,10 +976,17 @@ function renderCardBody(cong, idx, distrito) {
     <div class="field-grid">
       ${fld('Ciudad','Ciudad')}
       ${fld('Título Congregación','Nombre congregación')}
-      ${fld('Pastor','Pastor')}
-      ${fld('Teléfono','Teléfono')}
-      ${fld('e-mail','E-mail')}
-      ${fld('Dirección','Dirección')}
+      ${fld('Dirección','Dirección congregación')}
+      <div class="field-group field-full"></div>
+      <div class="pastor-group field-full">
+        <div class="pastor-group-label">Datos del pastor</div>
+        <div class="field-grid-inner">
+          ${fld('Pastor','Pastor')}
+          ${fld('Teléfono','Teléfono')}
+          ${fld('e-mail','E-mail')}
+          ${fld('Dirección Pastor','Dirección')}
+        </div>
+      </div>
       <div class="field-group field-full">
         <span class="field-label">Actividades / horarios</span>
         <textarea class="${actMissing}" onchange="updateField(${idx},'Actividades',this.value)">${actVal}</textarea>
